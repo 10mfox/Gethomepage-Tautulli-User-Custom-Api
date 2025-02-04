@@ -1,5 +1,3 @@
-# Gethomepage-Tautulli-User-Custom-Api
-
 # Tautulli User Activity API Manager
 
 A web application that allows you to customize and manage user activity data from Tautulli, featuring a dynamic templating system for formatting user status messages.
