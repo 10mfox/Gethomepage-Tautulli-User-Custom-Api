@@ -1,26 +1,20 @@
-# Use Node 18 alpine as base
 FROM node:18-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install all dependencies (including dev dependencies for build)
 RUN npm install
 
-# Copy project files
 COPY . .
 
-# Create production build of React app
-RUN npm run build
+# Create config directory
+RUN mkdir -p config && chown -R node:node config
 
-# Remove dev dependencies
+RUN npm run build
 RUN npm prune --production
 
-# Expose port
+USER node
+
 EXPOSE 3008
 
-# Start the server
 CMD ["node", "server.js"]

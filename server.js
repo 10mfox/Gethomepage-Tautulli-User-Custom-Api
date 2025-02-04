@@ -2,6 +2,8 @@ const express = require('express');
 const axios = require('axios');
 const path = require('path');
 const logger = require('./logger');
+const { loadSettings, saveSettings } = require('./config/settings');
+
 const app = express();
 const PORT = process.env.USER_API_PORT || 3009;
 
@@ -20,34 +22,31 @@ const config = {
 app.use(express.json());
 app.use(express.static('build'));
 
-// Default format settings
-const defaultFormatSettings = {
-  fields: [
-    { 
-      id: 'status_message', 
-      template: 'Seen [ ${last_seen_formatted} ] Watching ( ${last_played} )' 
-    }
-  ]
-};
-
-// Store format settings
-let formatSettings = { ...defaultFormatSettings };
-
 // Format settings endpoints
-app.get('/api/format-settings', (req, res) => {
-  logger.logApiRequest('GET', '/api/format-settings');
-  res.json(formatSettings);
+app.get('/api/format-settings', async (req, res) => {
+  try {
+    const settings = await loadSettings();
+    logger.logApiRequest('GET', '/api/format-settings');
+    res.json(settings);
+  } catch (error) {
+    logger.logError('Format Settings', error);
+    res.status(500).json({ error: 'Failed to load settings' });
+  }
 });
 
-app.post('/api/format-settings', (req, res) => {
-  logger.logApiRequest('POST', '/api/format-settings', req.body);
-  const { fields } = req.body;
-  if (!Array.isArray(fields)) {
-    logger.logError('Format Settings', new Error('Invalid format settings'));
-    return res.status(400).json({ error: 'Invalid format settings' });
+app.post('/api/format-settings', async (req, res) => {
+  try {
+    const { fields } = req.body;
+    if (!Array.isArray(fields)) {
+      throw new Error('Invalid format settings');
+    }
+    await saveSettings({ fields });
+    logger.logApiRequest('POST', '/api/format-settings', { fields });
+    res.json({ message: 'Settings saved successfully' });
+  } catch (error) {
+    logger.logError('Format Settings', error);
+    res.status(500).json({ error: 'Failed to save settings' });
   }
-  formatSettings = { fields };
-  res.json({ message: 'Format settings updated successfully' });
 });
 
 // Utility Functions
@@ -76,51 +75,56 @@ function formatTimeDifference(timestamp) {
   }
 }
 
-function transformUserData(responseData) {
-  if (!responseData?.response?.data?.data) {
-    logger.logError('Data Transform', new Error('Invalid response data structure'));
-    return [];
-  }
+async function transformUserData(responseData) {
+  try {
+    if (!responseData?.response?.data?.data) {
+      throw new Error('Invalid response data structure');
+    }
 
-  const users = responseData.response.data.data;
-  logger.logApiRequest('TRANSFORM', 'Processing users', { count: users.length });
+    const settings = await loadSettings();
+    const users = responseData.response.data.data;
+    logger.logApiRequest('TRANSFORM', 'Processing users', { count: users.length });
 
-  return users.map(user => {
-    // Base user data
-    const baseUser = {
-      user_id: user.user_id || '',
-      friendly_name: user.friendly_name || '',
-      username: user.username || '',
-      email: user.email || '',
-      is_active: user.is_active || 0,
-      is_admin: user.is_admin || 0,
-      last_seen: user.last_seen || '',
-      total_plays: user.total_plays || 0,
-      total_time_watched: user.total_time_watched || 0,
-      last_played: user.last_played ? capitalizeWords(user.last_played) : 'Nothing',
-    };
+    return users.map(user => {
+      // Base user data
+      const baseUser = {
+        user_id: user.user_id || '',
+        friendly_name: user.friendly_name || '',
+        username: user.username || '',
+        email: user.email || '',
+        is_active: user.is_active || 0,
+        is_admin: user.is_admin || 0,
+        last_seen: user.last_seen || '',
+        total_plays: user.total_plays || 0,
+        total_time_watched: user.total_time_watched || 0,
+        last_played: user.last_played ? capitalizeWords(user.last_played) : 'Nothing',
+      };
 
-    // Add computed fields
-    const computedData = {
-      ...baseUser,
-      minutes: baseUser.last_seen ? 
-        Math.floor((Date.now()/1000 - baseUser.last_seen) / 60) : 
-        0,
-      last_seen_formatted: formatTimeDifference(baseUser.last_seen)
-    };
+      // Add computed fields
+      const computedData = {
+        ...baseUser,
+        minutes: baseUser.last_seen ? 
+          Math.floor((Date.now()/1000 - baseUser.last_seen) / 60) : 
+          0,
+        last_seen_formatted: formatTimeDifference(baseUser.last_seen)
+      };
 
-    // Apply format settings templates
-    formatSettings.fields.forEach(({ id, template }) => {
-      let result = template;
-      Object.entries(computedData).forEach(([key, value]) => {
-        const regex = new RegExp(`\\$\{${key}}`, 'g');
-        result = result.replace(regex, value || '');
+      // Apply format settings templates
+      settings.fields.forEach(({ id, template }) => {
+        let result = template;
+        Object.entries(computedData).forEach(([key, value]) => {
+          const regex = new RegExp(`\\$\{${key}}`, 'g');
+          result = result.replace(regex, value || '');
+        });
+        computedData[id] = result;
       });
-      computedData[id] = result;
-    });
 
-    return computedData;
-  });
+      return computedData;
+    });
+  } catch (error) {
+    logger.logError('Data Transform', error);
+    throw error;
+  }
 }
 
 // Users endpoints
@@ -156,7 +160,7 @@ app.get('/api/users', async (req, res) => {
 
     logger.logApiResponse(200, response.data);
 
-    const transformedUsers = transformUserData(response.data);
+    const transformedUsers = await transformUserData(response.data);
     logger.logApiRequest('TRANSFORM', 'Transformed users', { count: transformedUsers.length });
 
     res.json({
@@ -193,14 +197,13 @@ app.get('/api/users/:userId', async (req, res) => {
 
     logger.logApiResponse(200, response.data);
 
-    // Transform single user data to match the expected format
-    const transformedUser = transformUserData({
+    const transformedUser = (await transformUserData({
       response: {
         data: {
           data: [response.data.response.data]
         }
       }
-    })[0];
+    }))[0];
 
     res.json({
       response: {
