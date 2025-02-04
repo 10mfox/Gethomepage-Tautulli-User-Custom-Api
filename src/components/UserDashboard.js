@@ -1,0 +1,187 @@
+import React, { useState, useEffect } from 'react';
+import { ArrowUpDown, Search, RefreshCw, User } from 'lucide-react';
+
+const UserDashboard = () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const [orderColumn, setOrderColumn] = useState('friendly_name');
+  const [orderDir, setOrderDir] = useState('asc');
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/users?order_column=${orderColumn}&order_dir=${orderDir}&search=${search}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      
+      const data = await response.json();
+      const usersList = data.response?.data || [];
+      setUsers(usersList);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [orderColumn, orderDir, search]);
+
+  const handleSort = (column) => {
+    setOrderDir(orderDir === 'asc' && orderColumn === column ? 'desc' : 'asc');
+    setOrderColumn(column);
+  };
+
+  const fetchUserDetails = async (userId) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user details');
+      }
+      const data = await response.json();
+      const userData = data.response?.data;
+      setSelectedUser(userData);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
+  };
+
+  return (
+    <div className="p-4 max-w-7xl mx-auto space-y-4">
+      {/* Search and Controls */}
+      <div className="flex items-center justify-between bg-gray-800 border border-gray-700 p-4 rounded-lg">
+        <div className="flex gap-2 items-center">
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64 px-3 py-2 bg-gray-900 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+          />
+          <button 
+            onClick={fetchUsers}
+            className="p-2 rounded hover:bg-gray-700 text-gray-300"
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Users Table */}
+        <div className="md:col-span-3 bg-gray-800 border border-gray-700 rounded-lg">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="p-4 text-left text-gray-300">
+                    <button 
+                      onClick={() => handleSort('friendly_name')}
+                      className="flex items-center gap-1 hover:text-white"
+                    >
+                      <span>Name</span>
+                      <ArrowUpDown className="h-4 w-4" />
+                    </button>
+                  </th>
+                  <th className="p-4 text-left text-gray-300">
+                    <button 
+                      onClick={() => handleSort('last_seen')}
+                      className="flex items-center gap-1 hover:text-white"
+                    >
+                      <span>Last Seen</span>
+                      <ArrowUpDown className="h-4 w-4" />
+                    </button>
+                  </th>
+                  <th className="p-4 text-left text-gray-300">
+                    <button 
+                      onClick={() => handleSort('total_plays')}
+                      className="flex items-center gap-1 hover:text-white"
+                    >
+                      <span>Plays</span>
+                      <ArrowUpDown className="h-4 w-4" />
+                    </button>
+                  </th>
+                  <th className="p-4 text-left text-gray-300">Status</th>
+                  <th className="p-4 text-left text-gray-300">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-8 text-gray-400">
+                      Loading users...
+                    </td>
+                  </tr>
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-8 text-gray-400">
+                      No users found
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.user_id} className="border-b border-gray-700 hover:bg-gray-700">
+                      <td className="p-4 text-gray-300">{user.friendly_name}</td>
+                      <td className="p-4 text-gray-300">{user.last_seen_formatted}</td>
+                      <td className="p-4 text-gray-300">{user.total_plays}</td>
+                      <td className="p-4 text-gray-300">{user.status_message}</td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => fetchUserDetails(user.user_id)}
+                          className="p-2 rounded hover:bg-gray-600 text-gray-300"
+                          title="View Details"
+                        >
+                          <User className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* User Details Panel */}
+        <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+          <h3 className="font-semibold text-white mb-4">User Details</h3>
+          {selectedUser ? (
+            <div className="space-y-2">
+              <p className="text-gray-300">
+                <span className="font-medium">Name:</span> {selectedUser.friendly_name}
+              </p>
+              <p className="text-gray-300">
+                <span className="font-medium">Email:</span> {selectedUser.email}
+              </p>
+              <p className="text-gray-300">
+                <span className="font-medium">Status:</span> {selectedUser.is_active ? 'Active' : 'Inactive'}
+              </p>
+              <p className="text-gray-300">
+                <span className="font-medium">Admin:</span> {selectedUser.is_admin ? 'Yes' : 'No'}
+              </p>
+              <p className="text-gray-300">
+                <span className="font-medium">Total Time:</span> {selectedUser.total_time_watched} minutes
+              </p>
+            </div>
+          ) : (
+            <p className="text-gray-400">Select a user to view details</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserDashboard;
