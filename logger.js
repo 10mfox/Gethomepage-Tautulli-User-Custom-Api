@@ -1,4 +1,3 @@
-// logger.js
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -15,7 +14,7 @@ const colors = {
 
 const banner = `
 ${colors.cyan}${colors.bright}╔════════════════════════════════════════════╗
-║            TAUTULLI CUSTOM API             ║
+║          TAUTULLI USER CUSTOM API          ║
 ╚════════════════════════════════════════════╝${colors.reset}
 `;
 
@@ -42,39 +41,13 @@ function logServerStart(port, config) {
   console.log(formatEndpoint(baseUrl, '/api/format-settings', 'Update format settings (POST)\n'));
 }
 
-function logApiRequest(method, endpoint, params = {}) {
-  console.log(`${colors.blue}${colors.bright}API REQUEST${colors.reset}`);
-  console.log(`${colors.white}▸ Method: ${colors.yellow}${method}${colors.reset}`);
-  console.log(`${colors.white}▸ Endpoint: ${colors.yellow}${endpoint}${colors.reset}`);
-  if (Object.keys(params).length > 0) {
-    console.log(`${colors.white}▸ Params: ${colors.dim}${JSON.stringify(params)}${colors.reset}`);
-  }
-  console.log();
-}
-
-function logApiResponse(status, data) {
-  const color = status >= 400 ? colors.red : colors.green;
-  console.log(`${colors.blue}${colors.bright}API RESPONSE${colors.reset}`);
-  console.log(`${colors.white}▸ Status: ${color}${status}${colors.reset}`);
-  if (data) {
-    const summary = {
-      result: data.response?.result,
-      recordsTotal: data.response?.data?.recordsTotal,
-      recordsFiltered: data.response?.data?.recordsFiltered,
-      dataLength: data.response?.data?.data?.length
-    };
-    console.log(`${colors.white}▸ Data: ${colors.dim}${JSON.stringify(summary)}${colors.reset}`);
-  }
-  console.log();
-}
-
+// Silent versions of logging functions that don't output anything
+function logApiRequest() {}
+function logApiResponse() {}
 function logError(context, error) {
+  // Only log critical errors to console
   console.error(`${colors.red}${colors.bright}ERROR: ${context}${colors.reset}`);
-  console.error(`${colors.dim}${error.message}${colors.reset}`);
-  if (error.response?.data) {
-    console.error(`${colors.dim}Response: ${JSON.stringify(error.response.data)}${colors.reset}`);
-  }
-  console.log();
+  console.error(`${colors.dim}${error.message}${colors.reset}\n`);
 }
 
 module.exports = {
