@@ -15,7 +15,7 @@ const colors = {
 const banner = `
 ${colors.cyan}${colors.bright}╔════════════════════════════════════════════╗
 ║          TAUTULLI USER CUSTOM API          ║
-╚════════════════════════════════════════════╝${colors.reset}
+╚════════════════════════════════════════════╝${colors.cyan}${colors.bright}
 `;
 
 function formatEndpoint(baseUrl, endpoint, description) {
@@ -30,15 +30,11 @@ function logServerStart(port, config) {
   console.log(`${colors.white}▸ Status: ${colors.green}Running${colors.reset}`);
   console.log(`${colors.white}▸ Port: ${colors.yellow}${port}${colors.reset}`);
   console.log(`${colors.white}▸ Tautulli URL: ${colors.yellow}${config.baseUrl}${colors.reset}`);
-  console.log(`${colors.white}▸ Environment: ${colors.yellow}${process.env.NODE_ENV || 'development'}${colors.reset}\n`);
   
   console.log(`${colors.cyan}${colors.bright}AVAILABLE ENDPOINTS${colors.reset}`);
   
   // API Endpoints
   console.log(formatEndpoint(baseUrl, '/api/users', 'List all users with sorting and filtering'));
-  console.log(formatEndpoint(baseUrl, '/api/users/:userId', 'Get specific user details'));
-  console.log(formatEndpoint(baseUrl, '/api/format-settings', 'Get current format settings'));
-  console.log(formatEndpoint(baseUrl, '/api/format-settings', 'Update format settings (POST)\n'));
 }
 
 // Silent versions of logging functions that don't output anything

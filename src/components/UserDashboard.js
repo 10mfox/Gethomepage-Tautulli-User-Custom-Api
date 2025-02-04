@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowUpDown, Search, RefreshCw, User } from 'lucide-react';
 
+// Format watch time from minutes to readable string
+const formatWatchTime = (minutes) => {
+  if (!minutes || minutes === 0) return 'No watch time recorded';
+  
+  const days = Math.floor(minutes / (24 * 60));
+  const hours = Math.floor((minutes % (24 * 60)) / 60);
+  const remainingMinutes = Math.floor(minutes % 60);
+  
+  const parts = [];
+  if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+  if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+  if (remainingMinutes > 0) parts.push(`${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`);
+  
+  return parts.join(', ');
+};
+
 const UserDashboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +151,7 @@ const UserDashboard = () => {
                     <tr key={user.user_id} className="border-b border-gray-700 hover:bg-gray-700">
                       <td className="p-4 text-gray-300">{user.friendly_name}</td>
                       <td className="p-4 text-gray-300">{user.last_seen_formatted}</td>
-                      <td className="p-4 text-gray-300">{user.total_plays}</td>
+                      <td className="p-4 text-gray-300">{user.total_plays || 0}</td>
                       <td className="p-4 text-gray-300">{user.status_message}</td>
                       <td className="p-4">
                         <button
@@ -172,7 +188,7 @@ const UserDashboard = () => {
                 <span className="font-medium">Admin:</span> {selectedUser.is_admin ? 'Yes' : 'No'}
               </p>
               <p className="text-gray-300">
-                <span className="font-medium">Total Time:</span> {selectedUser.total_time_watched} minutes
+                <span className="font-medium">Total Time:</span> {formatWatchTime(selectedUser.total_time_watched)}
               </p>
             </div>
           ) : (

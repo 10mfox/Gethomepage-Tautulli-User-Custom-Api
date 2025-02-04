@@ -136,32 +136,8 @@ const FormatManager = () => {
         <h2 className="text-lg font-bold text-white mb-4">Available Variables</h2>
         <div className="grid grid-cols-1 gap-2">
           <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$user_id</code>
-            <span className="text-gray-400 text-sm">Unique user identifier</span>
-          </div>
-          <div className="flex items-baseline gap-2">
             <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$friendly_name</code>
             <span className="text-gray-400 text-sm">Display name</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$username</code>
-            <span className="text-gray-400 text-sm">Login username</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$email</code>
-            <span className="text-gray-400 text-sm">User email address</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$is_active</code>
-            <span className="text-gray-400 text-sm">Account status (0/1)</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$is_admin</code>
-            <span className="text-gray-400 text-sm">Admin status (0/1)</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$last_seen</code>
-            <span className="text-gray-400 text-sm">Unix timestamp</span>
           </div>
           <div className="flex items-baseline gap-2">
             <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$total_plays</code>

@@ -95,8 +95,8 @@ async function transformUserData(responseData) {
         is_active: user.is_active || 0,
         is_admin: user.is_admin || 0,
         last_seen: user.last_seen || '',
-        total_plays: user.total_plays || 0,
-        total_time_watched: user.total_time_watched || 0,
+        total_plays: parseInt(user.plays || '0', 10),
+        total_time_watched: parseInt(user.total_time_watched || 0, 10),
         last_played: user.last_played ? capitalizeWords(user.last_played) : 'Nothing',
       };
 
@@ -185,9 +185,9 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/users/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
-    logger.logApiRequest('GET', `/api/users/${userId}`);
 
-    const response = await axios.get(`${config.baseUrl}/api/v2`, {
+    // Get user details
+    const userResponse = await axios.get(`${config.baseUrl}/api/v2`, {
       params: {
         apikey: config.apiKey,
         cmd: 'get_user',
@@ -195,12 +195,31 @@ app.get('/api/users/:userId', async (req, res) => {
       }
     });
 
-    logger.logApiResponse(200, response.data);
+    // Get user watch time statistics
+    const watchTimeResponse = await axios.get(`${config.baseUrl}/api/v2`, {
+      params: {
+        apikey: config.apiKey,
+        cmd: 'get_user_watch_time_stats',
+        user_id: userId,
+        query_days: 'all'
+      }
+    });
+
+    // Extract data
+    const userData = userResponse.data.response.data;
+    const watchStats = watchTimeResponse.data.response.data;
+
+    // Calculate total time in minutes (converting from seconds)
+    const totalSeconds = watchStats?.[0]?.total_time || 0;
+    const totalMinutes = Math.floor(parseInt(totalSeconds, 10) / 60);
 
     const transformedUser = (await transformUserData({
       response: {
         data: {
-          data: [response.data.response.data]
+          data: [{
+            ...userData,
+            total_time_watched: totalMinutes
+          }]
         }
       }
     }))[0];
@@ -212,7 +231,6 @@ app.get('/api/users/:userId', async (req, res) => {
       }
     });
   } catch (error) {
-    logger.logError('User Details API', error);
     res.status(500).json({ 
       response: {
         result: 'error',
