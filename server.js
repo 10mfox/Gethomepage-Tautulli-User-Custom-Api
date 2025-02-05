@@ -2,12 +2,11 @@ const express = require('express');
 const axios = require('axios');
 const path = require('path');
 const logger = require('./logger');
-const { loadSettings, saveSettings } = require('./settings'); // Updated path
+const { loadSettings, saveSettings } = require('./settings');
 
 const app = express();
 const PORT = process.env.USER_API_PORT || 3009;
 
-// Configuration
 const config = {
   get baseUrl() {
     let url = process.env.TAUTULLI_BASE_URL || '';
@@ -18,11 +17,9 @@ const config = {
   apiKey: process.env.TAUTULLI_API_KEY
 };
 
-// Middleware
 app.use(express.json());
 app.use(express.static('build'));
 
-// Format settings endpoints
 app.get('/api/format-settings', async (req, res) => {
   try {
     const settings = await loadSettings();
@@ -49,7 +46,6 @@ app.post('/api/format-settings', async (req, res) => {
   }
 });
 
-// Utility Functions
 function capitalizeWords(str) {
   if (!str) return '';
   return str.replace(/\b\w/g, char => char.toUpperCase());
@@ -81,12 +77,30 @@ async function transformUserData(responseData) {
       throw new Error('Invalid response data structure');
     }
 
+    // Get current activity data
+    const activityResponse = await axios.get(`${config.baseUrl}/api/v2`, {
+      params: {
+        apikey: config.apiKey,
+        cmd: 'get_activity'
+      }
+    });
+
+    // Create map of currently watching users
+    const watchingUsers = {};
+    activityResponse.data.response.data.sessions?.forEach(session => {
+      if (session.state === 'playing') {
+        watchingUsers[session.user_id] = {
+          current_media: session.grandparent_title ? `${session.grandparent_title} - ${session.title}` : session.title,
+          media_type: capitalizeWords(session.media_type)
+        };
+      }
+    });
+
     const settings = await loadSettings();
     const users = responseData.response.data.data;
-    logger.logApiRequest('TRANSFORM', 'Processing users', { count: users.length });
 
     return users.map(user => {
-      // Base user data
+      const watching = watchingUsers[user.user_id];
       const baseUser = {
         user_id: user.user_id || '',
         friendly_name: user.friendly_name || '',
@@ -97,11 +111,11 @@ async function transformUserData(responseData) {
         last_seen: user.last_seen || '',
         total_plays: parseInt(user.plays || '0', 10),
         total_time_watched: parseInt(user.total_time_watched || 0, 10),
-        last_played: user.last_played ? capitalizeWords(user.last_played) : 'Nothing',
-        media_type: user.media_type ? capitalizeWords(user.media_type) : '',
+        is_watching: watching ? 'Watching' : 'Watched',
+        last_played: watching ? capitalizeWords(watching.current_media) : (user.last_played ? capitalizeWords(user.last_played) : 'Nothing'),
+        media_type: watching ? watching.media_type : (user.media_type ? capitalizeWords(user.media_type) : '')
       };
 
-      // Add computed fields
       const computedData = {
         ...baseUser,
         minutes: baseUser.last_seen ? 
@@ -110,7 +124,6 @@ async function transformUserData(responseData) {
         last_seen_formatted: formatTimeDifference(baseUser.last_seen)
       };
 
-      // Apply format settings templates
       settings.fields.forEach(({ id, template }) => {
         let result = template;
         Object.entries(computedData).forEach(([key, value]) => {
@@ -128,7 +141,6 @@ async function transformUserData(responseData) {
   }
 }
 
-// Users endpoints
 app.get('/api/users', async (req, res) => {
   try {
     const {
@@ -187,7 +199,6 @@ app.get('/api/users/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    // Get user details
     const userResponse = await axios.get(`${config.baseUrl}/api/v2`, {
       params: {
         apikey: config.apiKey,
@@ -196,7 +207,6 @@ app.get('/api/users/:userId', async (req, res) => {
       }
     });
 
-    // Get user watch time statistics
     const watchTimeResponse = await axios.get(`${config.baseUrl}/api/v2`, {
       params: {
         apikey: config.apiKey,
@@ -206,11 +216,9 @@ app.get('/api/users/:userId', async (req, res) => {
       }
     });
 
-    // Extract data
     const userData = userResponse.data.response.data;
     const watchStats = watchTimeResponse.data.response.data;
 
-    // Calculate total time in minutes (converting from seconds)
     const totalSeconds = watchStats?.[0]?.total_time || 0;
     const totalMinutes = Math.floor(parseInt(totalSeconds, 10) / 60);
 
@@ -241,12 +249,10 @@ app.get('/api/users/:userId', async (req, res) => {
   }
 });
 
-// Serve React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-// Start server
 app.listen(PORT, () => {
   logger.logServerStart(PORT, config);
 });

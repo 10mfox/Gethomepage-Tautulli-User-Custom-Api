@@ -5,7 +5,7 @@ const FormatManager = () => {
   const [formatFields, setFormatFields] = useState([
     { 
       id: 'status_message', 
-      template: 'Seen [ ${last_seen_formatted} ] Watching ( ${last_played} )' 
+      template: '${is_watching} ( ${last_played} )' 
     }
   ]);
 
@@ -56,6 +56,7 @@ const FormatManager = () => {
       total_plays: 150,
       last_played: 'The Matrix',
       media_type: 'Movie',
+      is_watching: 'Watching',
       minutes: 60
     };
 
@@ -143,11 +144,15 @@ const FormatManager = () => {
           </div>
           <div className="flex items-baseline gap-2">
             <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${last_played}'}</code>
-            <span className="text-gray-400 text-sm">Last played title</span>
+            <span className="text-gray-400 text-sm">Currently watching or last watched title</span>
           </div>
           <div className="flex items-baseline gap-2">
             <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${media_type}'}</code>
             <span className="text-gray-400 text-sm">Type of media being played</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${is_watching}'}</code>
+            <span className="text-gray-400 text-sm">Current status ('Watching' or 'Watched')</span>
           </div>
           <div className="flex items-baseline gap-2">
             <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${last_seen_formatted}'}</code>
