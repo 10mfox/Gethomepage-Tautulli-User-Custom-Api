@@ -102,16 +102,11 @@ GET /api/users
 
 | Variable | Description |
 |----------|-------------|
-| ${user_id} | Unique user identifier |
 | ${friendly_name} | Display name |
-| ${username} | Login username |
-| ${email} | User email address |
-| ${is_active} | Account status (0/1) |
-| ${is_admin} | Admin status (0/1) |
-| ${last_seen} | Unix timestamp |
-| ${last_seen_formatted} | Formatted last seen time |
 | ${total_plays} | Total play count |
 | ${last_played} | Last played title |
+| ${media_type} | Type of media (Movie/TV Show) |
+| ${last_seen_formatted} | Formatted last seen time |
 
 ## Contributing
 
