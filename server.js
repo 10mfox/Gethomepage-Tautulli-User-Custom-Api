@@ -36,16 +36,16 @@ function formatTimeDifference(timestamp) {
   const diffInSeconds = Math.floor(now - timestamp);
   
   if (diffInSeconds < 60) {
-    return 'Just Now';
+    return 'Was Online Just Now';
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} ${minutes !== 1 ? 'Minutes' : 'Minute'} Ago`;
+    return `Was Online ${minutes} ${minutes !== 1 ? 'Minutes' : 'Minute'} Ago`;
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} ${hours !== 1 ? 'Hours' : 'Hour'} Ago`;
+    return `Was Online ${hours} ${hours !== 1 ? 'Hours' : 'Hour'} Ago`;
   } else {
     const days = Math.floor(diffInSeconds / 86400);
-    return `${days} ${days !== 1 ? 'Days' : 'Day'} Ago`;
+    return `Was Online ${days} ${days !== 1 ? 'Days' : 'Day'} Ago`;
   }
 }
 
