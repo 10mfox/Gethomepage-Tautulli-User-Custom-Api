@@ -1,34 +1,49 @@
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install all dependencies
 RUN npm install
 
-# Copy project files
+# Copy all project files
 COPY . .
 
-# Create config directory and set permissions
-RUN mkdir -p config && chown -R node:node config
-
-# Build the React application
+# Build React app
 RUN npm run build
 
-# Prune dev dependencies
-RUN npm prune --production
+# Production stage
+FROM node:18-alpine
 
-# Switch to non-root user
+WORKDIR /app
+
+# Copy package files and lock file
+COPY package*.json ./
+
+# Install production dependencies
+RUN npm install --omit=dev
+
+# Copy necessary files from build stage
+COPY --from=build /app/build ./build
+COPY --from=build /app/server.js ./
+COPY --from=build /app/logger.js ./
+COPY --from=build /app/settings.js ./
+COPY --from=build /app/config.js ./
+
+# Create config directory with proper permissions
+RUN mkdir -p config && chown -R node:node config
+
+# Create volume for persistent config
+VOLUME /app/config
+
+# Use non-root user
 USER node
 
-# Expose port
+# Expose the port the app runs on
 EXPOSE 3009
 
-# Ensure server.js is in the correct location
-RUN ls -la server.js
-
-# Start the application
-CMD ["node", "./server.js"]
+# Command to run the application
+CMD ["node", "server.js"]

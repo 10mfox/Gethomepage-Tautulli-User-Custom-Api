@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const path = require('path');
 const logger = require('./logger');
-const { loadSettings, saveSettings } = require('./config/settings');
+const { loadSettings, saveSettings } = require('./settings'); // Updated path
 
 const app = express();
 const PORT = process.env.USER_API_PORT || 3009;

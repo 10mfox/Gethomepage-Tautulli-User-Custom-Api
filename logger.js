@@ -15,7 +15,7 @@ const colors = {
 const banner = `
 ${colors.cyan}${colors.bright}╔════════════════════════════════════════════╗
 ║          TAUTULLI USER CUSTOM API          ║
-╚════════════════════════════════════════════╝${colors.cyan}${colors.bright}
+╚════════════════════════════════════════════╝${colors.reset}
 `;
 
 function formatEndpoint(baseUrl, endpoint, description) {
