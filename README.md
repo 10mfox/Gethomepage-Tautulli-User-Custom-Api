@@ -5,10 +5,6 @@ A web application that allows you to customize and manage user activity data fro
 ![users](https://github.com/user-attachments/assets/88544591-cb6e-49e5-9e04-7c7c49d6aa77)
 ![settings](https://github.com/user-attachments/assets/4b941448-78ed-4d8b-9d1e-73a471a1f561)
 
-
-
-
-
 ## Features
 
 - Customizable user activity display templates
@@ -44,6 +40,8 @@ services:
       - TAUTULLI_API_KEY=your_tautulli_api_key
     ports:
       - "3009:3009"
+    volumes:
+      - ./config:/app/config
     restart: unless-stopped
 ```
 
@@ -53,15 +51,6 @@ docker-compose up -d
 ```
 
 4. Access the web UI at `http://localhost:3009`
-
-## Settings Persistence
-
-Format settings are automatically stored in `/app/config/settings.json` and persist across container restarts. The config directory can be mounted as a volume to maintain settings:
-
-```yaml
-volumes:
-  - ./config:/app/config
-```
 
 ## Environment Variables
 
@@ -73,10 +62,8 @@ volumes:
 
 ## API Endpoints
 
-### Users
-```
-GET /api/users
-```
+### GET /api/users
+Returns a list of users with their current status and activity information.
 
 ### Response Format
 
@@ -91,7 +78,7 @@ GET /api/users
         "last_seen": "1234567890",
         "last_seen_formatted": "2 hours ago",
         "total_plays": 150,
-        "status_message": "Seen [ 2 hours ago ] Watching ( The Matrix )"
+        "status_message": "Watched ( The Matrix )"
       }
     ]
   }
@@ -104,9 +91,10 @@ GET /api/users
 |----------|-------------|
 | ${friendly_name} | Display name |
 | ${total_plays} | Total play count |
-| ${last_played} | Last played title |
+| ${last_played} | Currently watching or last watched title |
 | ${media_type} | Type of media (Movie/TV Show) |
-| ${last_seen_formatted} | Formatted last seen time |
+| ${last_seen_formatted} | Now (if watching) or last seen time |
+| ${is_watching} | Current status (Watching/Watched) |
 
 ## Contributing
 

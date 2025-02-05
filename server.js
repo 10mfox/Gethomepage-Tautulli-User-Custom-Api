@@ -121,7 +121,7 @@ async function transformUserData(responseData) {
         minutes: baseUser.last_seen ? 
           Math.floor((Date.now()/1000 - baseUser.last_seen) / 60) : 
           0,
-        last_seen_formatted: formatTimeDifference(baseUser.last_seen)
+        last_seen_formatted: watching ? 'Now' : formatTimeDifference(baseUser.last_seen)
       };
 
       settings.fields.forEach(({ id, template }) => {
