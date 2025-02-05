@@ -23,7 +23,7 @@ A web application that allows you to customize and manage user activity data fro
 
 1. Pull the Docker image:
 ```bash
-docker pull ghcr.io/10mfox/gethomepage-tautulli-user-custom-api:beta
+docker pull ghcr.io/10mfox/gethomepage-tautulli-user-custom-api:latest
 ```
 
 2. Create a docker-compose.yml:
@@ -31,7 +31,7 @@ docker pull ghcr.io/10mfox/gethomepage-tautulli-user-custom-api:beta
 version: '3'
 services:
   tautulli-user-api:
-    image: ghcr.io/10mfox/gethomepage-tautulli-user-custom-api:beta
+    image: ghcr.io/10mfox/gethomepage-tautulli-user-custom-api:latest
     container_name: tautulli-user-api
     environment:
       - USER_API_PORT=3009
