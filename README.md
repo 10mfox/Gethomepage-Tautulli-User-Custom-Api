@@ -38,7 +38,7 @@ services:
       - TAUTULLI_BASE_URL=http://your-tautulli-host:8181
       - TAUTULLI_API_KEY=your_tautulli_api_key
     ports:
-      - "3008:3008"
+      - "3009:3009"
     restart: unless-stopped
 ```
 
