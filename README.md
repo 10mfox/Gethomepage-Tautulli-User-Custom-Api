@@ -7,12 +7,16 @@ A web application that allows you to customize and manage user activity data fro
 
 ## Features
 
-- Customizable user activity display templates
-- Real-time preview of formatting changes
-- Dynamic user status messages
-- User activity dashboard with sorting and filtering
-- Dark mode UI with responsive design
-- Docker support
+- Real-time status updates for currently watching users including:
+  - Progress percentage and timestamps
+  - Media type (Movie/TV Show)
+  - Content title with episode info for TV Shows
+- Customizable display templates with dynamic variable support
+- Sorting and filtering of user activity
+- Last seen time tracking with automatic formatting
+- Watch time statistics and play counts
+- Dark mode responsive UI optimized for desktop and mobile
+- Docker deployment with config persistence
 
 ## Prerequisites
 
@@ -75,10 +79,21 @@ Returns a list of users with their current status and activity information.
       {
         "user_id": "1",
         "friendly_name": "User1",
+        "username": "user1",
+        "email": "user1@example.com",
+        "is_active": 1,
+        "is_admin": 0,
         "last_seen": "1234567890",
-        "last_seen_formatted": "2 hours ago",
         "total_plays": 150,
-        "status_message": "Watched ( The Matrix )"
+        "total_time_watched": 12345,
+        "is_watching": "Watching",
+        "last_played": "The Matrix",
+        "media_type": "Movie",
+        "progress_percent": "10%",
+        "progress_time": "10:21 / 60:00",
+        "minutes": 60,
+        "last_seen_formatted": "Now",
+        "status_message": "Watching ( The Matrix )"
       }
     ]
   }
@@ -95,6 +110,8 @@ Returns a list of users with their current status and activity information.
 | ${media_type} | Type of media (Movie/TV Show) |
 | ${last_seen_formatted} | Now (if watching) or last seen time |
 | ${is_watching} | Current status (Watching/Watched) |
+| ${progress_percent} | Current progress (e.g., "10%") |
+| ${progress_time} | Current time / total time (e.g., "10:21 / 60:00") |
 
 ## Contributing
 

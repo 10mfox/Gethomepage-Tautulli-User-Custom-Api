@@ -17,6 +17,38 @@ const config = {
   apiKey: process.env.TAUTULLI_API_KEY
 };
 
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function capitalizeWords(str) {
+  if (!str) return '';
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function formatTimeDifference(timestamp) {
+  if (!timestamp) return 'Never';
+  
+  const now = Date.now() / 1000;
+  const diffInSeconds = Math.floor(now - timestamp);
+  
+  if (diffInSeconds < 60) {
+    return 'Just Now';
+  } else if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} ${minutes !== 1 ? 'Minutes' : 'Minute'} Ago`;
+  } else if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} ${hours !== 1 ? 'Hours' : 'Hour'} Ago`;
+  } else {
+    const days = Math.floor(diffInSeconds / 86400);
+    return `${days} ${days !== 1 ? 'Days' : 'Day'} Ago`;
+  }
+}
+
 app.use(express.json());
 app.use(express.static('build'));
 
@@ -46,31 +78,6 @@ app.post('/api/format-settings', async (req, res) => {
   }
 });
 
-function capitalizeWords(str) {
-  if (!str) return '';
-  return str.replace(/\b\w/g, char => char.toUpperCase());
-}
-
-function formatTimeDifference(timestamp) {
-  if (!timestamp) return 'Never';
-  
-  const now = Date.now() / 1000;
-  const diffInSeconds = Math.floor(now - timestamp);
-  
-  if (diffInSeconds < 60) {
-    return 'Just Now';
-  } else if (diffInSeconds < 3600) {
-    const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} ${minutes !== 1 ? 'Minutes' : 'Minute'} Ago`;
-  } else if (diffInSeconds < 86400) {
-    const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} ${hours !== 1 ? 'Hours' : 'Hour'} Ago`;
-  } else {
-    const days = Math.floor(diffInSeconds / 86400);
-    return `${days} ${days !== 1 ? 'Days' : 'Day'} Ago`;
-  }
-}
-
 async function transformUserData(responseData) {
   try {
     if (!responseData?.response?.data?.data) {
@@ -91,13 +98,17 @@ async function transformUserData(responseData) {
       if (session.state === 'playing') {
         watchingUsers[session.user_id] = {
           current_media: session.grandparent_title ? `${session.grandparent_title} - ${session.title}` : session.title,
-          media_type: capitalizeWords(session.media_type)
+          media_type: capitalizeWords(session.media_type),
+          progress_percent: session.progress_percent || '0',
+          view_offset: parseFloat(session.view_offset || 0),
+          duration: parseFloat(session.duration || 0)
         };
       }
     });
 
     const settings = await loadSettings();
     const users = responseData.response.data.data;
+    logger.logApiRequest('TRANSFORM', 'Processing users', { count: users.length });
 
     return users.map(user => {
       const watching = watchingUsers[user.user_id];
@@ -113,7 +124,9 @@ async function transformUserData(responseData) {
         total_time_watched: parseInt(user.total_time_watched || 0, 10),
         is_watching: watching ? 'Watching' : 'Watched',
         last_played: watching ? capitalizeWords(watching.current_media) : (user.last_played ? capitalizeWords(user.last_played) : 'Nothing'),
-        media_type: watching ? watching.media_type : (user.media_type ? capitalizeWords(user.media_type) : '')
+        media_type: watching ? watching.media_type : (user.media_type ? capitalizeWords(user.media_type) : ''),
+        progress_percent: watching ? `${watching.progress_percent}%` : '',
+        progress_time: watching ? `${formatTime(watching.view_offset)} / ${formatTime(watching.duration)}` : ''
       };
 
       const computedData = {
@@ -121,7 +134,7 @@ async function transformUserData(responseData) {
         minutes: baseUser.last_seen ? 
           Math.floor((Date.now()/1000 - baseUser.last_seen) / 60) : 
           0,
-        last_seen_formatted: watching ? 'Now' : formatTimeDifference(baseUser.last_seen)
+        last_seen_formatted: watching ? '🟢' : formatTimeDifference(baseUser.last_seen)
       };
 
       settings.fields.forEach(({ id, template }) => {

@@ -57,6 +57,8 @@ const FormatManager = () => {
       last_played: 'The Matrix',
       media_type: 'Movie',
       is_watching: 'Watching',
+      progress_percent: '10',
+      progress_time: '10:21 / 60:00',
       minutes: 60
     };
 
@@ -155,8 +157,16 @@ const FormatManager = () => {
             <span className="text-gray-400 text-sm">Current status ('Watching' or 'Watched')</span>
           </div>
           <div className="flex items-baseline gap-2">
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${progress_percent}'}</code>
+            <span className="text-gray-400 text-sm">Current progress (e.g., "10%")</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${progress_time}'}</code>
+            <span className="text-gray-400 text-sm">Current time / total time (e.g., "10:21 / 60:00")</span>
+          </div>
+          <div className="flex items-baseline gap-2">
             <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${last_seen_formatted}'}</code>
-            <span className="text-gray-400 text-sm">Formatted last seen time</span>
+            <span className="text-gray-400 text-sm">🟢 (if watching) or last seen time</span>
           </div>
         </div>
       </div>
