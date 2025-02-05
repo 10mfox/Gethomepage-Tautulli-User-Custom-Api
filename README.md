@@ -2,8 +2,8 @@
 
 A web application that allows you to customize and manage user activity data from Tautulli, featuring a dynamic templating system for formatting user status messages.
 
-![users](https://github.com/user-attachments/assets/88544591-cb6e-49e5-9e04-7c7c49d6aa77)
-![settings](https://github.com/user-attachments/assets/4b941448-78ed-4d8b-9d1e-73a471a1f561)
+![users](https://github.com/user-attachments/assets/820042d2-49f4-4d11-9149-19f22c8ac512)
+![settings](https://github.com/user-attachments/assets/15f50a54-9171-4f95-b4d2-a1e331cfdfc9)
 
 ## Features
 
