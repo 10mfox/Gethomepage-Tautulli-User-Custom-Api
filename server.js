@@ -49,6 +49,8 @@ function formatTimeDifference(timestamp) {
   }
 }
 
+
+
 app.use(express.json());
 app.use(express.static('build'));
 
@@ -108,9 +110,16 @@ async function transformUserData(responseData) {
 
     const settings = await loadSettings();
     const users = responseData.response.data.data;
+
+    // Convert plays to numbers and ensure proper sorting
+    users.forEach(user => {
+      user.plays = parseInt(user.plays || '0', 10);
+      user.total_plays = parseInt(user.plays || '0', 10);
+    });
+
     logger.logApiRequest('TRANSFORM', 'Processing users', { count: users.length });
 
-    return users.map(user => {
+    const transformedUsers = users.map(user => {
       const watching = watchingUsers[user.user_id];
       const baseUser = {
         user_id: user.user_id || '',
@@ -120,7 +129,7 @@ async function transformUserData(responseData) {
         is_active: user.is_active || 0,
         is_admin: user.is_admin || 0,
         last_seen: user.last_seen || '',
-        total_plays: parseInt(user.plays || '0', 10),
+        total_plays: user.plays,
         total_time_watched: parseInt(user.total_time_watched || 0, 10),
         is_watching: watching ? 'Watching' : 'Watched',
         last_played: watching ? capitalizeWords(watching.current_media) : (user.last_played ? capitalizeWords(user.last_played) : 'Nothing'),
@@ -133,7 +142,7 @@ async function transformUserData(responseData) {
         ...baseUser,
         minutes: baseUser.last_seen ? 
           Math.floor((Date.now()/1000 - baseUser.last_seen) / 60) : 
-          0,
+          Number.MAX_SAFE_INTEGER,
         last_seen_formatted: watching ? '🟢' : formatTimeDifference(baseUser.last_seen)
       };
 
@@ -148,6 +157,16 @@ async function transformUserData(responseData) {
 
       return computedData;
     });
+
+    // Sort users if needed based on order column
+    const orderColumn = responseData.response.data.order_column;
+    const direction = responseData.response.data.order_dir === 'asc' ? 1 : -1;
+    
+    if (orderColumn === 'total_plays' || orderColumn === 'plays') {
+      transformedUsers.sort((a, b) => direction * (a.total_plays - b.total_plays));
+    }
+
+    return transformedUsers;
   } catch (error) {
     logger.logError('Data Transform', error);
     throw error;
@@ -183,6 +202,10 @@ app.get('/api/users', async (req, res) => {
         start
       }
     });
+
+    // Add sorting parameters to response data for transformUserData
+    response.data.response.data.order_column = order_column;
+    response.data.response.data.order_dir = order_dir;
 
     logger.logApiResponse(200, response.data);
 

@@ -21,8 +21,10 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
-  const [orderColumn, setOrderColumn] = useState('friendly_name');
-  const [orderDir, setOrderDir] = useState('asc');
+  const [sortConfig, setSortConfig] = useState({
+    column: 'friendly_name',
+    direction: 'asc'
+  });
   const [selectedUser, setSelectedUser] = useState(null);
   const [formatFields, setFormatFields] = useState([]);
 
@@ -43,17 +45,22 @@ const UserDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `/api/users?order_column=${orderColumn}&order_dir=${orderDir}&search=${search}`
-      );
+      const params = new URLSearchParams({
+        order_column: sortConfig.column,
+        order_dir: sortConfig.direction,
+        search: search
+      });
+      
+      const response = await fetch(`/api/users?${params}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
       
       const data = await response.json();
-      const usersList = data.response?.data || [];
-      setUsers(usersList);
+      if (data.response?.data) {
+        setUsers(data.response.data);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
       setError(error.message);
@@ -63,12 +70,29 @@ const UserDashboard = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [orderColumn, orderDir, search]);
+    const debounceTimer = setTimeout(() => {
+      fetchUsers();
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [sortConfig, search]);
 
   const handleSort = (column) => {
-    setOrderDir(orderDir === 'asc' && orderColumn === column ? 'desc' : 'asc');
-    setOrderColumn(column);
+    setSortConfig(prevConfig => ({
+      column,
+      direction: prevConfig.column === column && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const getSortIcon = (column) => {
+    if (sortConfig.column !== column) {
+      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
+    }
+    return (
+      <ArrowUpDown 
+        className={`h-4 w-4 ${sortConfig.direction === 'asc' ? 'text-blue-400' : 'text-blue-400 rotate-180'}`} 
+      />
+    );
   };
 
   const fetchUserDetails = async (userId) => {
@@ -84,6 +108,17 @@ const UserDashboard = () => {
       console.error('Error fetching user details:', error);
     }
   };
+
+  const columnDefs = [
+    { id: 'friendly_name', label: 'Name', sortable: true },
+    { id: 'last_seen', label: 'Last Seen', sortable: true },
+    { id: 'total_plays', label: 'Plays', sortable: true },
+    ...formatFields.map(field => ({
+      id: field.id,
+      label: field.id.charAt(0).toUpperCase() + field.id.slice(1),
+      sortable: false
+    }))
+  ];
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-4">
@@ -112,42 +147,19 @@ const UserDashboard = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-700">
-                  <th className="p-4 text-left text-gray-300">
-                    <button 
-                      onClick={() => handleSort('friendly_name')}
-                      className="flex items-center gap-1 hover:text-white"
-                    >
-                      <span>Name</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="p-4 text-left text-gray-300">
-                    <button 
-                      onClick={() => handleSort('last_seen')}
-                      className="flex items-center gap-1 hover:text-white"
-                    >
-                      <span>Last Seen</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="p-4 text-left text-gray-300">
-                    <button 
-                      onClick={() => handleSort('total_plays')}
-                      className="flex items-center gap-1 hover:text-white"
-                    >
-                      <span>Plays</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  {formatFields.map(field => (
-                    <th key={field.id} className="p-4 text-left text-gray-300">
-                      <button 
-                        onClick={() => handleSort(field.id)}
-                        className="flex items-center gap-1 hover:text-white"
-                      >
-                        <span>{field.id.charAt(0).toUpperCase() + field.id.slice(1)}</span>
-                        <ArrowUpDown className="h-4 w-4" />
-                      </button>
+                  {columnDefs.map(({ id, label: colLabel, sortable }) => (
+                    <th key={id} className="p-4 text-left text-gray-300">
+                      {sortable ? (
+                        <button 
+                          onClick={() => handleSort(id)}
+                          className="flex items-center gap-1 hover:text-white"
+                        >
+                          <span>{colLabel}</span>
+                          {getSortIcon(id)}
+                        </button>
+                      ) : (
+                        <span>{colLabel}</span>
+                      )}
                     </th>
                   ))}
                   <th className="p-4 text-left text-gray-300">Actions</th>
