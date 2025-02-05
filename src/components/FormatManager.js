@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Save, Eye } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 
 const FormatManager = () => {
   const [formatFields, setFormatFields] = useState([
@@ -45,7 +45,6 @@ const FormatManager = () => {
   };
 
   const updatePreview = (fields) => {
-    // Sample data for preview
     const sampleData = {
       user_id: '12345',
       friendly_name: 'John Doe',
@@ -56,6 +55,7 @@ const FormatManager = () => {
       last_seen: Math.floor(Date.now() / 1000) - 3600,
       total_plays: 150,
       last_played: 'The Matrix',
+      media_type: 'Movie',
       minutes: 60
     };
 
@@ -93,9 +93,8 @@ const FormatManager = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-[#0F172A] text-white rounded-lg shadow-lg">
-      <h1 className="text-2xl font-bold text-white mb-6">Tautulli User Custom API Manager</h1>
+      <h1 className="text-2xl font-bold text-white mb-6">Format Manager</h1>
       
-      {/* Format Fields */}
       <div className="space-y-4">
         {formatFields.map((field, index) => (
           <div key={index} className="flex gap-3 bg-[#1E293B] p-4 rounded-lg border border-gray-700">
@@ -131,30 +130,37 @@ const FormatManager = () => {
         </button>
       </div>
 
-      {/* Available Variables */}
       <div className="mt-8 mb-8">
         <h2 className="text-lg font-bold text-white mb-4">Available Variables</h2>
         <div className="grid grid-cols-1 gap-2">
           <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$friendly_name</code>
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${friendly_name}'}</code>
             <span className="text-gray-400 text-sm">Display name</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$total_plays</code>
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${total_plays}'}</code>
             <span className="text-gray-400 text-sm">Total play count</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$last_played</code>
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${last_played}'}</code>
             <span className="text-gray-400 text-sm">Last played title</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">$last_seen_formatted</code>
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${media_type}'}</code>
+            <span className="text-gray-400 text-sm">Type of media being played</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <code className="bg-gray-900 px-1 rounded text-sm font-mono text-blue-400">{'${last_seen_formatted}'}</code>
             <span className="text-gray-400 text-sm">Formatted last seen time</span>
           </div>
         </div>
       </div>
 
-      {/* Save Button */}
+      <div className="mt-8 bg-gray-800 p-4 rounded-lg">
+        <h3 className="text-lg font-bold text-white mb-2">Preview</h3>
+        <pre className="text-sm text-gray-300 whitespace-pre-wrap">{preview}</pre>
+      </div>
+
       <button
         onClick={handleSave}
         className="flex items-center gap-2 px-4 py-2 mt-6 bg-green-600 hover:bg-green-700 text-white rounded"

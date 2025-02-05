@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpDown, Search, RefreshCw, User } from 'lucide-react';
+import { ArrowUpDown, RefreshCw, User } from 'lucide-react';
 
-// Format watch time from minutes to readable string
 const formatWatchTime = (minutes) => {
   if (!minutes || minutes === 0) return 'No watch time recorded';
   
@@ -25,6 +24,20 @@ const UserDashboard = () => {
   const [orderColumn, setOrderColumn] = useState('friendly_name');
   const [orderDir, setOrderDir] = useState('asc');
   const [selectedUser, setSelectedUser] = useState(null);
+  const [formatFields, setFormatFields] = useState([]);
+
+  useEffect(() => {
+    const fetchFormatSettings = async () => {
+      try {
+        const response = await fetch('/api/format-settings');
+        const data = await response.json();
+        setFormatFields(data.fields || []);
+      } catch (error) {
+        console.error('Error loading format settings:', error);
+      }
+    };
+    fetchFormatSettings();
+  }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -74,7 +87,6 @@ const UserDashboard = () => {
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-4">
-      {/* Search and Controls */}
       <div className="flex items-center justify-between bg-gray-800 border border-gray-700 p-4 rounded-lg">
         <div className="flex gap-2 items-center">
           <input
@@ -94,9 +106,7 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Users Table */}
         <div className="md:col-span-3 bg-gray-800 border border-gray-700 rounded-lg">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -129,20 +139,30 @@ const UserDashboard = () => {
                       <ArrowUpDown className="h-4 w-4" />
                     </button>
                   </th>
-                  <th className="p-4 text-left text-gray-300">Status</th>
+                  {formatFields.map(field => (
+                    <th key={field.id} className="p-4 text-left text-gray-300">
+                      <button 
+                        onClick={() => handleSort(field.id)}
+                        className="flex items-center gap-1 hover:text-white"
+                      >
+                        <span>{field.id.charAt(0).toUpperCase() + field.id.slice(1)}</span>
+                        <ArrowUpDown className="h-4 w-4" />
+                      </button>
+                    </th>
+                  ))}
                   <th className="p-4 text-left text-gray-300">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-8 text-gray-400">
+                    <td colSpan={5 + formatFields.length} className="text-center py-8 text-gray-400">
                       Loading users...
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-8 text-gray-400">
+                    <td colSpan={5 + formatFields.length} className="text-center py-8 text-gray-400">
                       No users found
                     </td>
                   </tr>
@@ -152,7 +172,9 @@ const UserDashboard = () => {
                       <td className="p-4 text-gray-300">{user.friendly_name}</td>
                       <td className="p-4 text-gray-300">{user.last_seen_formatted}</td>
                       <td className="p-4 text-gray-300">{user.total_plays || 0}</td>
-                      <td className="p-4 text-gray-300">{user.status_message}</td>
+                      {formatFields.map(field => (
+                        <td key={field.id} className="p-4 text-gray-300">{user[field.id]}</td>
+                      ))}
                       <td className="p-4">
                         <button
                           onClick={() => fetchUserDetails(user.user_id)}
@@ -170,7 +192,6 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {/* User Details Panel */}
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
           <h3 className="font-semibold text-white mb-4">User Details</h3>
           {selectedUser ? (

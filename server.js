@@ -98,6 +98,7 @@ async function transformUserData(responseData) {
         total_plays: parseInt(user.plays || '0', 10),
         total_time_watched: parseInt(user.total_time_watched || 0, 10),
         last_played: user.last_played ? capitalizeWords(user.last_played) : 'Nothing',
+        media_type: user.media_type ? capitalizeWords(user.media_type) : '',
       };
 
       // Add computed fields
